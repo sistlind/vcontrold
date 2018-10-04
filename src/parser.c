@@ -133,7 +133,7 @@ int parseLine(char *line, char *hex, int *hexlen, char *uSPtr, ssize_t uSPtrLen)
 int execByteCode(compilePtr cmpPtr, int fd, char *recvBuf, short recvLen,
                  char *sendBuf, short sendLen, short supressUnit,
                  char bitpos, int retry,
-                 char *pRecvPtr, unsigned short recvTimeout)
+                 char *pRecvPtr, unsigned short recvTimeout, char append_wo_wait)
 {
     char string[256];
     char result[MAXBUF];
@@ -189,6 +189,11 @@ int execByteCode(compilePtr cmpPtr, int fd, char *recvBuf, short recvLen,
 
     do {
         cPtr = cmpPtr; // We need the starting point for the next round
+        if (append_wo_wait==1)
+        {
+            cmpPtr = cmpPtr->next;//skip send 04
+            cmpPtr = cmpPtr->next;//skip wait
+        }
         while (cmpPtr) {
             switch (cmpPtr->token) {
             case WAIT:
@@ -212,15 +217,24 @@ int execByteCode(compilePtr cmpPtr, int fd, char *recvBuf, short recvLen,
 
                     // Copy all SEND data and BYTES data to out_buff, that CRC calculation
                     // works in framer_send()
-                    memcpy(out_buff + out_len, cmpPtr->send, cmpPtr->len);
-                    out_len += cmpPtr->len;
+                        memcpy(out_buff + out_len, cmpPtr->send, cmpPtr->len);
+                        out_len += cmpPtr->len;
 
                     if (! (cmpPtr->next && cmpPtr->next->token == BYTES)) {
                         break;
                     }
                     cmpPtr = cmpPtr->next;
                 }
+  
+                if (append_wo_wait==1 && out_buff[0]==0x01)
+                {
+                    //Do not send beginning 0x01; which is only the ACK for the 0x05 from vito
+                    out_len--;
+                    for(int i=0;i<out_len;i++) {
+                        out_buff[i]=out_buff[i+1];
+                    }
 
+                }
                 if (! framer_send(fd, out_buff, out_len)) {
                     logIT1(LOG_ERR, "Error in send, terminating");
                     return -1;

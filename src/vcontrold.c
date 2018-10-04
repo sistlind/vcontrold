@@ -286,6 +286,7 @@ int interactive(int socketfd, char *device)
     char *ptr;
     short sendLen;
     char buffer[MAXBUF];
+    char append_wo_wait=0;
 
     Writen(socketfd, PROMPT, strlen(PROMPT));
     bzero(readBuf, sizeof(readBuf));
@@ -436,7 +437,7 @@ int interactive(int socketfd, char *device)
             if (cPtr->precmd && (pcPtr = getCommandNode(cfgPtr->devPtr->cmdPtr, cPtr->precmd))) {
                 logIT(LOG_INFO, "Executing pre command %s", cPtr->precmd);
 
-                if (execByteCode(pcPtr->cmpPtr, fd, pRecvBuf, sizeof(pRecvBuf), sendBuf, sendLen, 1, pcPtr->bit, pcPtr->retry, pRecvBuf, pcPtr->recvTimeout) == -1) {
+                if (execByteCode(pcPtr->cmpPtr, fd, pRecvBuf, sizeof(pRecvBuf), sendBuf, sendLen, 1, pcPtr->bit, pcPtr->retry, pRecvBuf, pcPtr->recvTimeout, 0) == -1) {
                     logIT(LOG_ERR, "Error executing %s", readBuf);
                     sendErrMsg(socketfd);
                     break;
@@ -451,7 +452,15 @@ int interactive(int socketfd, char *device)
             // -1: Error
             //  0: Preformatted string
             //  n: raw bytes
-            count = execByteCode(cPtr->cmpPtr, fd, recvBuf, sizeof(recvBuf), sendBuf, sendLen, noUnit, cPtr->bit, cPtr->retry, pRecvBuf, cPtr->recvTimeout);
+
+            if (append_wo_wait==0)
+            {
+                //first packet: wait for 0x05 from vito
+                count = execByteCode(cPtr->cmpPtr, fd, recvBuf, sizeof(recvBuf), sendBuf, sendLen, noUnit, cPtr->bit, cPtr->retry, pRecvBuf, cPtr->recvTimeout, append_wo_wait);
+                append_wo_wait=1;  //do not wait at further commands          
+            } else {
+                count = execByteCode(cPtr->cmpPtr, fd, recvBuf, sizeof(recvBuf), sendBuf+2, sendLen, noUnit, cPtr->bit, cPtr->retry, pRecvBuf, cPtr->recvTimeout, append_wo_wait);
+            }
 
             if (count == -1) {
                 logIT(LOG_ERR, "Error executing %s", readBuf);
