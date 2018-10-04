@@ -999,7 +999,7 @@ int main(int argc, char *argv[])
         close(pidFD);
         unlink(pidFile);
     };
-    logIT1(LOG_LOCAL0, "vcontrold terminated");
+    logIT1(LOG_INFO, "vcontrold terminated");
 
     return 0;
 }

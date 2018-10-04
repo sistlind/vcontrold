@@ -42,8 +42,8 @@ int initLog(int useSyslog, char *logfile, int debugSwitch)
     // If needed, opes the syslog or log file
     if (useSyslog) {
         syslogger = 1;
-        openlog("vito", LOG_PID, LOG_LOCAL0);
-        syslog(LOG_LOCAL0, "vito started");
+        openlog("vito", LOG_PID, LOG_INFO);
+        syslog(LOG_INFO, "vito started");
     }
 
     if (logfile) {
