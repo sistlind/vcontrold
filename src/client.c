@@ -181,6 +181,7 @@ trPtr sendCmdFile(int sockfd, const char *filename)
     trPtr startPtr = NULL;
 
     if (! (filePtr = fopen(filename, "r"))) {
+        logIT(LOG_ERR, "File not found: %s", filename);
         return NULL;
     } else {
         logIT(LOG_INFO, "Opened command file %s", filename);

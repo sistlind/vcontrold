@@ -61,8 +61,8 @@ void usage()
     printf("            [--execute <exec file>] [--cacti] [--munin] [--verbose]\n");
     printf("            [command3 [command4] ...]\n\n");
 
-    printf("    -h|--host         <IPv4>:<Port> or <IPv6> of vcontrold\n");
-    printf("    -p|--port         <port> of vcontrold when using IPv6\n");
+    printf("    -h|--host         <IPv4>:<Port> or <IPv6> of vcontrold;default is localhost:3002\n");
+    printf("    -p|--port         <port> of vcontrold when using IPv6; default is 3002\n");
     printf("    -c|--command      List of commands to be executed, sparated by commas\n");
     printf("    -f|--commandfile  Optional command file, one command per line\n");
     printf("    -s|--csvfile      Format output in CSV for further processing\n");
@@ -88,7 +88,7 @@ void usage()
 int main(int argc, char *argv[])
 {
     // Get the command line options
-    char *host;
+    char *host="";
     int port = 0;
     char commands[512] = "";
     const char *cmdfile = NULL;
@@ -298,14 +298,29 @@ int main(int argc, char *argv[])
        -h 192.168.2.1:3002 vs --host 2003:abcd:ff::1 --port 3002
        or --host 2003:abcd:ff::1:3002, assume the last :3002 be the port
        This is just for backwards compatibility. */
-    if (port == 0) {
+
+
+    if ((port == 0) && (strlen(host) > 0)) {
         // check for last ':' in host
         char *last_colon = NULL;
 
         last_colon = strrchr(host, ':');
-        port = atoi(last_colon + 1);
-        //printf(">>> port=%d\n", port);
-        *last_colon = '\0';
+        if(last_colon != NULL)
+        {
+            port = atoi(last_colon + 1);
+            //printf(">>> port=%d\n", port);
+            *last_colon = '\0';
+        }
+    }
+
+    if (host == "") {
+       // logIT(LOG_NOTICE, "Host not set, assuming localhost");
+        host="localhost";
+    }
+
+    if (port == 0) {
+       // logIT(LOG_NOTICE, "Port not set, assuming default port 3002");
+        port=3002;
     }
 
     sockfd = connectServer(host, port);
