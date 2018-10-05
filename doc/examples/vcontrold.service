@@ -1,0 +1,14 @@
+[Unit]
+Description=Vcontrold service
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/local/sbin/vcontrold --pidfile /run/vcontrold.pid
+Restart=always
+RestartSec=2
+PIDFile=/run/vcontrold.pid
+
+
+[Install]
+WantedBy=multi-user.target
