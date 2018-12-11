@@ -287,6 +287,8 @@ int interactive(int socketfd, char *device)
     short sendLen;
     char buffer[MAXBUF];
     char append_wo_wait=0;
+    struct timeval now, last, delta;
+    last.tv_usec=0;
 
     Writen(socketfd, PROMPT, strlen(PROMPT));
     bzero(readBuf, sizeof(readBuf));
@@ -442,6 +444,7 @@ int interactive(int socketfd, char *device)
                     sendErrMsg(socketfd);
                     break;
                 } else {
+                    gettimeofday(&last, NULL);
                     bzero(buffer, sizeof(buffer));
                     char2hex(buffer, pRecvBuf, pcPtr->len);
                     logIT(LOG_INFO, "Result of pre command: %s", buffer);
@@ -452,15 +455,19 @@ int interactive(int socketfd, char *device)
             // -1: Error
             //  0: Preformatted string
             //  n: raw bytes
-
-            if (append_wo_wait==0)
+            gettimeofday(&now, NULL);
+            timersub(&now,&last,&delta);
+            if ( delta.tv_sec > 1 || delta.tv_usec > 100000 )
             {
+                logIT(LOG_INFO, " sending header delta %is %ius", delta.tv_sec,delta.tv_usec);
                 //first packet: wait for 0x05 from vito
-                count = execByteCode(cPtr->cmpPtr, fd, recvBuf, sizeof(recvBuf), sendBuf, sendLen, noUnit, cPtr->bit, cPtr->retry, pRecvBuf, cPtr->recvTimeout, append_wo_wait);
-                append_wo_wait=1;  //do not wait at further commands          
+                count = execByteCode(cPtr->cmpPtr, fd, recvBuf, sizeof(recvBuf), sendBuf, sendLen, noUnit, cPtr->bit, cPtr->retry, pRecvBuf, cPtr->recvTimeout, 0);
+                //append_wo_wait=1;  //do not wait at further commands          
             } else {
-                count = execByteCode(cPtr->cmpPtr, fd, recvBuf, sizeof(recvBuf), sendBuf+2, sendLen, noUnit, cPtr->bit, cPtr->retry, pRecvBuf, cPtr->recvTimeout, append_wo_wait);
+                logIT(LOG_INFO, "not sending header delta %is %ius", delta.tv_sec,delta.tv_usec);
+                count = execByteCode(cPtr->cmpPtr, fd, recvBuf, sizeof(recvBuf), sendBuf+2, sendLen, noUnit, cPtr->bit, cPtr->retry, pRecvBuf, cPtr->recvTimeout, 1);
             }
+            gettimeofday(&last, NULL);
 
             if (count == -1) {
                 logIT(LOG_ERR, "Error executing %s", readBuf);
