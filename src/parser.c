@@ -499,7 +499,7 @@ int expand(commandPtr cPtr, protocolPtr pPtr)
         return 0;
     }
 
-    logIT(LOG_INFO, "protocmd line: %s", sendPtr);
+    //logIT(LOG_INFO, "protocmd line: %s", sendPtr);
     bzero(eString, sizeof(eString));
     cPtr->retry = iPtr->retry; // We take the Retry value from the protocol command
     cPtr->recvTimeout = iPtr->recvTimeout; // Same for the receive timeout
@@ -556,7 +556,7 @@ int expand(commandPtr cPtr, protocolPtr pPtr)
         sendPtr = bptr;
     } while (*sendPtr);
 
-    logIT(LOG_INFO, "  After substitution: %s", eString);
+    //logIT(LOG_INFO, "  After substitution: %s", eString);
     tmpPtr = calloc(strlen(eString) + 1, sizeof(char));
     strcpy(tmpPtr, eString);
 
@@ -588,7 +588,7 @@ int expand(commandPtr cPtr, protocolPtr pPtr)
     } while (*sendPtr);
 
     free(tmpPtr);
-    logIT(LOG_INFO, "   after EXPAND:%s", eString);
+    //logIT(LOG_INFO, "   after EXPAND:%s", eString);
     if (! (cPtr->send = calloc(strlen(eString) + 1, sizeof(char)))) {
         logIT1(LOG_ERR, "calloc failed");
         exit(1);
@@ -635,7 +635,7 @@ compilePtr buildByteCode(commandPtr cPtr, unitPtr uPtr)
         return 0;
     }
 
-    logIT(LOG_INFO, "BuildByteCode: %s", sendPtr);
+    //logIT(LOG_INFO, "BuildByteCode: %s", sendPtr);
     bzero(eString, sizeof(eString));
     do {
         ptr = sendPtr;
@@ -649,7 +649,7 @@ compilePtr buildByteCode(commandPtr cPtr, unitPtr uPtr)
         hexlen = 0;
         bzero(uSPtr, sizeof(uString));
         token = parseLine(cmd, hex, &hexlen, uString, sizeof(uString));
-        logIT(LOG_INFO, "        Token: %d Hexlen: %d, Unit: %s", token, hexlen, uSPtr);
+        //logIT(LOG_INFO, "        Token: %d Hexlen: %d, Unit: %s", token, hexlen, uSPtr);
         cmpPtr = newCompileNode(cmpStartPtr);
 
         if (!cmpStartPtr) {
@@ -682,7 +682,7 @@ void compileCommand(devicePtr dPtr, unitPtr uPtr)
         compileCommand(dPtr->next, uPtr);
     }
 
-    logIT(LOG_INFO, "Expanding command for device %s", dPtr->id);
+   // logIT(LOG_INFO, "Expanding command for device %s", dPtr->id);
     expand(dPtr->cmdPtr, dPtr->protoPtr);
     buildByteCode(dPtr->cmdPtr, uPtr);
 }
